@@ -216,3 +216,6 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+credit_risk_dumps
+german_credit_data_100k.csv
