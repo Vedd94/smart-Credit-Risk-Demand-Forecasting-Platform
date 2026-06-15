@@ -1,0 +1,130 @@
+import pandas as pd
+import numpy as np
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import RandomForestClassifier, VotingClassifier
+from xgboost import XGBClassifier
+from components.logger import logging
+import os
+from pathlib import Path
+import pickle
+
+def load_data(file_path: str) -> pd.DataFrame:
+    """
+    Load data from a CSV file.
+    
+    :param file_path: Path to the CSV file
+    :return: Loaded DataFrame
+    """
+    try:
+        df = pd.read_csv(file_path)
+        logging.info('Data loaded from %s with shape %s', file_path, df.shape)
+        return df
+    except pd.errors.ParserError as e:
+        logging.error('Failed to parse the CSV file: %s', e)
+        raise
+    except FileNotFoundError as e:
+        logging.error('File not found: %s', e)
+        raise
+    except Exception as e:
+        logging.error('Unexpected error occurred while loading the data: %s', e)
+        raise
+
+def train_ml_model(X_train: np.ndarray, y_train: np.ndarray):
+    """
+    Train the Decision tree, RandomForest model and XGBoost
+    
+    :param X_train: Training features
+    :param y_train: Training labels
+
+    :return: Trained models
+    """
+    try:
+        if X_train.shape[0] != y_train.shape[0]:
+            raise ValueError("The number of samples in X_train and y_train must be the same.")
+        
+        logging.info('Initializing Decision Tree model')
+        dt = DecisionTreeClassifier(random_state=1, class_weight='balanced', max_depth=5, min_samples_split=2, min_samples_leaf=2)
+        dt.fit(X_train, y_train)
+        logging.info('Decison tree trained')
+
+        logging.info('Initializing Random Forest model')
+        rfc = RandomForestClassifier(random_state=1, class_weight='balanced', n_jobs=-1,
+                                    n_estimators=100,
+                                    max_depth = 5,
+                                    min_samples_split = 10,
+                                    min_samples_leaf = 2)
+        rfc.fit(X_train, y_train)
+        logging.info('Random Forest Classifier trained')
+
+        logging.info('Initializing XGboost model')
+        xgb = XGBClassifier(
+            random_state=1,
+            n_estimators=100,
+            max_depth=5,
+            learning_rate=0.1,
+            eval_metric='logloss'
+        )
+        xgb.fit(X_train, y_train)
+        logging.info('XGBoost model trained')
+
+        voting_clf = VotingClassifier(
+        estimators=[
+            ('dt', dt),
+            ('rfc', rfc),
+            ('xgb', xgb)
+        ],
+        voting='soft'
+        )
+
+        voting_clf.fit(X_train, y_train)
+        
+        logging.info('ML models trained')
+        
+        return voting_clf
+    except ValueError as e:
+        logging.error('ValueError during model training: %s', e)
+        raise
+    except Exception as e:
+        logging.error('Error during model training: %s', e)
+        raise
+
+def save_model(model, file_path: str) -> None:
+    """
+    Save the trained model to a file.
+    
+    :param model: Trained model object
+    :param file_path: Path to save the model file
+    """
+    try:
+        # Ensure the directory exists
+        os.makedirs(os.path.dirname(file_path), exist_ok=True)
+        
+        with open(file_path, 'wb') as file:
+            pickle.dump(model, file)
+        logging.info('Model saved to %s', file_path)
+    except FileNotFoundError as e:
+        logging.error('File path not found: %s', e)
+        raise
+    except Exception as e:
+        logging.error('Error occurred while saving the model: %s', e)
+        raise
+
+def main():
+    try:
+        # params = {'n_estimators': 25, 'random_state': 2}
+        preprocessed_data_path = Path("D:/GenAI/Barclays/smart-Credit-Risk-Demand-Forecasting-Platform/data/preprocessed/preprocessed_train.csv") 
+        train_data = load_data(preprocessed_data_path)
+        X_train = train_data.drop('Risk', axis = 1).values
+        y_train = train_data['Risk'].values
+
+        voting = train_ml_model(X_train, y_train)
+        
+        model_save_path = Path("D:/GenAI/Barclays/Smart-Credit-Risk-Demand-Forecasting-Platform/models/model.pkl") 
+        save_model(voting, model_save_path)
+
+    except Exception as e:
+        logging.error('Failed to complete the model building process: %s', e)
+        print(f"Error: {e}")
+
+if __name__ == '__main__':
+    main()

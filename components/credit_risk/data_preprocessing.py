@@ -86,7 +86,7 @@ def save_data(df: pd.DataFrame, data_path: str) -> None:
 
 def main():
     try:
-        test_size = 0.2
+       
         data_path = Path("D:/GenAI/Barclays/smart-Credit-Risk-Demand-Forecasting-Platform/data/raw/train.csv")
         df = load_data(data_path)
         df = basic_preprocessing(df)
@@ -94,7 +94,6 @@ def main():
         save_data(final_df, data_path='D:\GenAI\Barclays\smart-Credit-Risk-Demand-Forecasting-Platform\data')
         logging.info(f"Dataset Shape: {final_df.shape}")
         print(final_df.head())
-        # train_data, test_data = train_test_split(final_df, test_size=test_size, random_state=2)
         
     except Exception as e:
         logging.error('Failed to complete the data ingestion process: %s', e)
