@@ -62,27 +62,20 @@ def train_ml_model(X_train: np.ndarray, y_train: np.ndarray, params: dict):
 
     :return: Trained models
     """
-    mlflow.set_experiment('Credit-Risk-ML')
-
-    with mlflow.start_run():
-        try:
+    model_dict = {}    
+    try:
             if X_train.shape[0] != y_train.shape[0]:
                 raise ValueError("The number of samples in X_train and y_train must be the same.")
             
             logging.info('Initializing Decision Tree model')
             dt = DecisionTreeClassifier(random_state=1, class_weight='balanced', min_samples_split=2, min_samples_leaf=2)
-            grid_search = GridSearchCV(estimator=dt, param_grid=params['model_training_dt'], cv=5, n_jobs=-1, verbose=2, scoring='roc_auc')
-            grid_search.fit(X_train, y_train)
+            grid_search_dt = GridSearchCV(estimator=dt, param_grid=params['model_training_dt'], cv=5, n_jobs=-1, verbose=2, scoring='roc_auc')
+            grid_search_dt.fit(X_train, y_train)
 
-            # log all the child runs
-            for i in range(len(grid_search.cv_results_['params'])):
-
-                with mlflow.start_run(nested=True) as child:
-                    mlflow.log_params(grid_search.cv_results_["params"][i])
-                    mlflow.log_metric("roc_auc", grid_search.cv_results_["mean_test_score"][i])
+            model_dict['grid_search_dt'] = grid_search_dt.cv_results_
             
-            best_dt = grid_search.best_estimator_
-            logging.info('Decison tree trained. Best Params', grid_search.best_params_)
+            best_dt = grid_search_dt.best_estimator_
+            logging.info('Decison tree trained. Best Params', grid_search_dt.best_params_)
 
             logging.info('Initializing Random Forest model')
             rfc = RandomForestClassifier(random_state=1, class_weight='balanced', n_jobs=-1,
@@ -91,17 +84,13 @@ def train_ml_model(X_train: np.ndarray, y_train: np.ndarray, params: dict):
                                         min_samples_split = 10,
                                         min_samples_leaf = 2)
             
-            grid_search = GridSearchCV(estimator=rfc, param_grid=params['model_training_rfc'], cv=5, n_jobs=-1, verbose=2, scoring='roc_auc')
-            grid_search.fit(X_train, y_train)
-            # log all the child runs
-            for i in range(len(grid_search.cv_results_['params'])):
+            grid_search_rfc = GridSearchCV(estimator=rfc, param_grid=params['model_training_rfc'], cv=5, n_jobs=-1, verbose=2, scoring='roc_auc')
+            grid_search_rfc.fit(X_train, y_train)
+            
+            model_dict['grid_search_rfc'] = grid_search_rfc.cv_results_
+            best_rfc = grid_search_rfc.best_estimator_
 
-                with mlflow.start_run(nested=True) as child:
-                    mlflow.log_params(grid_search.cv_results_["params"][i])
-                    mlflow.log_metric("roc_auc", grid_search.cv_results_["mean_test_score"][i])
-            best_rfc = grid_search.best_estimator_
-
-            logging.info('Random Forest Classifier trained. Best params', grid_search.best_params_)
+            logging.info('Random Forest Classifier trained. Best params', grid_search_rfc.best_params_)
 
             logging.info('Initializing XGboost model')
             xgb = XGBClassifier(
@@ -111,18 +100,13 @@ def train_ml_model(X_train: np.ndarray, y_train: np.ndarray, params: dict):
                 learning_rate=0.1,
                 eval_metric='logloss'
             )
-            grid_search = GridSearchCV(estimator=xgb, param_grid=params['model_training_rfc'], cv=5, n_jobs=-1, verbose=2, scoring='roc_auc')
-            grid_search.fit(X_train, y_train)
+            grid_search_xgb = GridSearchCV(estimator=xgb, param_grid=params['model_training_rfc'], cv=5, n_jobs=-1, verbose=2, scoring='roc_auc')
+            grid_search_xgb.fit(X_train, y_train)
 
-            # log all the child runs
-            for i in range(len(grid_search.cv_results_['params'])):
+            model_dict['grid_search_xgb'] = grid_search_xgb.cv_results_
 
-                with mlflow.start_run(nested=True) as child:
-                    mlflow.log_params(grid_search.cv_results_["params"][i])
-                    mlflow.log_metric("roc_auc", grid_search.cv_results_["mean_test_score"][i])
-
-            best_xgb = grid_search.best_estimator_
-            logging.info('XGBoost model trained. Best Params:', grid_search.best_params_)
+            best_xgb = grid_search_xgb.best_estimator_
+            logging.info('XGBoost model trained. Best Params:', grid_search_xgb.best_params_)
 
             voting_clf = VotingClassifier(
             estimators=[
@@ -137,11 +121,11 @@ def train_ml_model(X_train: np.ndarray, y_train: np.ndarray, params: dict):
             
             logging.info('ML models trained')
             
-            return voting_clf
-        except ValueError as e:
+            return voting_clf, model_dict
+    except ValueError as e:
             logging.error('ValueError during model training: %s', e)
             raise
-        except Exception as e:
+    except Exception as e:
             logging.error('Error during model training: %s', e)
             raise
 
@@ -175,10 +159,12 @@ def main():
         X_train = train_data.drop('Risk', axis = 1).values
         y_train = train_data['Risk'].values
 
-        voting = train_ml_model(X_train, y_train, params)
+        voting, model_dict = train_ml_model(X_train, y_train, params)
         
         model_save_path = Path("D:/GenAI/Barclays/Smart-Credit-Risk-Demand-Forecasting-Platform/models/model.pkl") 
         save_model(voting, model_save_path)
+
+        return model_dict
 
     except Exception as e:
         logging.error('Failed to complete the model building process: %s', e)

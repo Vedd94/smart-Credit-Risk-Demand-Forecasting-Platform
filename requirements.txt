@@ -7,3 +7,5 @@ xgboost
 ipykernel
 from_root
 torch
+dvc
+mlflow

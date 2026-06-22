@@ -1,0 +1,9 @@
+model_training_dt:
+  max_depth: [5, 10, 15]
+
+model_training_rfc:
+  n_estimators: [10, 50, 100]
+  max_depth: [5, 10, 15]
+
+model_training_xgb:
+  

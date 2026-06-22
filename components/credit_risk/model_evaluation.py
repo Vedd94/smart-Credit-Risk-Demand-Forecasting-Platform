@@ -88,6 +88,8 @@ def main():
         metrics = evaluate_model(voting_clf, X_test, y_test)
         print(metrics)
         save_metrics(metrics, 'reports/metrics.json')
+
+        return metrics
     except Exception as e:
         logging.error('Failed to complete the model evaluation process: %s', e)
         print(f"Error: {e}")
