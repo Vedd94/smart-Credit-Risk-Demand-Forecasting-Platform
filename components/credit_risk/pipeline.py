@@ -5,6 +5,7 @@ from components.credit_risk import model_evaluation
 import mlflow
 import pickle
 
+# Adding Training and mlflow pipeline
 def main():
     data_ingestion.main()
     data_preprocessing.main()
