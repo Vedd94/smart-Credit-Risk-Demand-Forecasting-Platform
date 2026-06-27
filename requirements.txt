@@ -9,3 +9,5 @@ from_root
 torch
 dvc
 mlflow
+fastapi
+pydantic

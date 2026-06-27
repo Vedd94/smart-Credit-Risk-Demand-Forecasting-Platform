@@ -4,6 +4,7 @@ from pathlib import Path
 from components.logger import logging
 from sklearn.preprocessing import OneHotEncoder, OrdinalEncoder, StandardScaler, LabelEncoder
 from sklearn.compose import ColumnTransformer
+import joblib
 
 def load_data(file_path: str) -> pd.DataFrame:
     """Load data from a CSV file."""
@@ -65,6 +66,11 @@ def preprocess_data(df: pd.DataFrame) -> pd.DataFrame:
         df["Risk"] = le_target.fit_transform(df["Risk"])
 
         logging.debug('Data preprocessing completed')
+
+        joblib.dump(ohe, "artifacts/ohe.pkl")
+        joblib.dump(orc, "artifacts/ordinal_encoder.pkl")
+        joblib.dump(std, "artifacts/scaler.pkl")
+        joblib.dump(le_target, "artifacts/label_encoder.pkl")
         return df
     except KeyError as e:
         logging.error('Missing column in the dataframe: %s', e)
