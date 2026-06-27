@@ -11,3 +11,5 @@ dvc
 mlflow
 fastapi
 pydantic
+uvicorn
+streamlit

@@ -3,15 +3,15 @@ from components.logger import logging
 import joblib
 import pickle
 
-def main():
+def main(user_input: pd.DataFrame):
     pass
     try:
         num_cols = ["Age", "Credit amount", "Duration"]
         nominal_cols = ["Sex", "Housing", "Purpose"]
         ordinal_cols = ["Saving accounts", "Checking account"]
 
-        user_input = {'Age':23,'Sex':'female','Job':2,'Housing':'own','Saving accounts':'quite rich','Checking account':'little','Credit amount':3543,'Duration':24,'Purpose':'radio/TV'}
-        user_input = pd.DataFrame([user_input])
+        # user_input = {'Age':23,'Sex':'female','Job':2,'Housing':'own','Saving accounts':'quite rich','Checking account':'little','Credit amount':3543,'Duration':24,'Purpose':'radio/TV'}
+        # user_input = pd.DataFrame([user_input])
         ohe = joblib.load("D:/GenAI/Barclays/smart-Credit-Risk-Demand-Forecasting-Platform/artifacts/ohe.pkl")
         ohe_encoded = ohe.transform(user_input[nominal_cols])
 
