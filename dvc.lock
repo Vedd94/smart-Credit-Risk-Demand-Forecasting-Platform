@@ -1,0 +1,42 @@
+schema: '2.0'
+stages:
+  train:
+    cmd: python -m components.credit_risk.model_training
+    deps:
+    - path: components/credit_risk/model_training.py
+      hash: md5
+      md5: 45dd72df32c5e49000371b0c078111b9
+      size: 7325
+    - path: components/credit_risk/params.yaml
+      hash: md5
+      md5: a6e21732e365148e5ee0786d096c5dbd
+      size: 151
+    - path: data/preprocessed/preprocessed_train.csv
+      hash: md5
+      md5: 60680963e53a1a82f6abd497895676e1
+      size: 5008044
+    outs:
+    - path: models/model.pkl
+      hash: md5
+      md5: e881690ce0e152f07510e73870b1b0f6
+      size: 59031920
+  evaluate:
+    cmd: python -m components.credit_risk.model_evaluation
+    deps:
+    - path: components/credit_risk/model_evaluation.py
+      hash: md5
+      md5: faa1bb593be2d311efc2c6800f217be2
+      size: 3438
+    - path: data/raw/test.csv
+      hash: md5
+      md5: 33be489d75cd87e4164ba4bf382ed9e9
+      size: 1101071
+    - path: models/model.pkl
+      hash: md5
+      md5: e881690ce0e152f07510e73870b1b0f6
+      size: 59031920
+    outs:
+    - path: reports/metrics.json
+      hash: md5
+      md5: 5ed241dfdda836e4c9caa38e2b34f8fd
+      size: 145

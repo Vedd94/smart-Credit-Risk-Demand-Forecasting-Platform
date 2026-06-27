@@ -1,28 +1,19 @@
 stages:
 
-  preprocess:
-    cmd: python -m components.credit_risk.data_preprocessing
-    deps:
-      - components/credit_risk/data_preprocessing.py
-      - data/raw/train.csv
-  
-    outs:
-      - data/preprocessed/preprocessed_train.csv
-
   train:
     cmd: python -m components.credit_risk.model_training
     deps:
-      - components/credit_risk/model_training.py
-      - data/preprocessed/preprocessed_train.csv
-      - components/credit_risk/params.yaml
+    - components/credit_risk/model_training.py
+    - data/preprocessed/preprocessed_train.csv
+    - components/credit_risk/params.yaml
     outs:
-      - models/model.pkl
+    - models/model.pkl
 
   evaluate:
     cmd: python -m components.credit_risk.model_evaluation
     deps:
-      - components/credit_risk/model_evaluation.py
-      - models/model.pkl
-      - data/raw/test.csv
+    - components/credit_risk/model_evaluation.py
+    - models/model.pkl
+    - data/raw/test.csv
     metrics:
-      - reports/metrics.json
+    - reports/metrics.json
