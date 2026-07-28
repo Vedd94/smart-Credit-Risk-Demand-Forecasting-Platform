@@ -6,8 +6,8 @@ from typing import Literal, Annotated
 import pickle
 import pandas as pd
 
-with open('models/model.pkl', 'rb') as f:
-    model = pickle.load(f)
+# with open('models/model.pkl', 'rb') as f:
+    # model = pickle.load(f)
 class UserInput(BaseModel):
 
     age: Annotated[int, Field(..., gt=0, lt=120, description='Age of the user')]
@@ -40,3 +40,7 @@ def predict_risk(data: UserInput):
     prediction = prediction_pipeline.main(input_df)
 
     return JSONResponse(status_code=200, content={'predicted_category': prediction})
+
+@app.get("/health")
+def health():
+    return {"status": "healthy"}

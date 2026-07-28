@@ -1,0 +1,66 @@
+name: Credit Risk CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test-and-build:
+    runs-on: ubuntu-latest
+
+    steps:
+	
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install backend dependencies
+        run: |
+          cd backend
+          pip install -r requirements.txt
+
+      - name: Install frontend dependencies
+        run: |
+          cd frontend
+          pip install -r requirements.txt
+
+      - name: Install development tools
+        run: |
+          pip install pytest ruff dvc
+
+      - name: Lint
+        run: ruff check .
+
+      - name: Run backend tests
+        run: |
+          cd backend
+          pytest
+
+      - name: Validate DVC
+        run: dvc status
+
+      - name: Build backend image
+        run: docker build -t credit-risk-backend ./backend
+
+      - name: Build frontend image
+        run: docker build -t credit-risk-frontend ./frontend
+
+      - name: Build Containers
+        run: docker compose up --build -d
+
+      - name: Wait for services
+        run: sleep 20
+
+      - name: Health check
+        run: curl --fail http://localhost:8000/health
+
+      - name: Stop services
+        if: always()
+        run: docker compose down
+

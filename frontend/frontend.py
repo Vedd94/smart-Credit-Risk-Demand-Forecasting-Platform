@@ -17,7 +17,7 @@ credit_amount = st.number_input("Credit Amount")
 duration = st.number_input("Duration")
 purpose =  st.selectbox("Purpose", options=['radio/TV', 'education', 'vacation/others', 'car','furniture/equipment', 'domestic appliances', 'business','repairs'])
 
-if st.button("Predict Premium Category"):
+if st.button("Classify Risk"):
     input_data = {
         'age':age,
         'sex':sex,
@@ -35,9 +35,10 @@ if st.button("Predict Premium Category"):
         response = requests.post(API_URL, json=input_data)
         result = response.json()
 
-        if response.status_code == 200 and "response" in result:
-            prediction = result["response"]
-            st.success(f"Credit Risk **{prediction['predicted_category']}**")
+        if response.status_code == 200:
+            st.success(
+                f"Credit Risk: **{result['predicted_category']}**"
+            )
             
 
         else:
