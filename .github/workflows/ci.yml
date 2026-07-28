@@ -1,66 +1,96 @@
+---
 name: Credit Risk CI
 
 on:
   push:
-    branches: [main, develop]
+    branches:
+      - main
+      - develop
+
   pull_request:
-    branches: [main]
+    branches:
+      - main
 
 jobs:
   test-and-build:
     runs-on: ubuntu-latest
 
     steps:
-	
       - name: Checkout Repository
         uses: actions/checkout@v4
 
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.13"
+          python-version: "3.11"
 
       - name: Install backend dependencies
         run: |
           cd backend
+          python -m pip install --upgrade pip
           pip install -r requirements.txt
 
       - name: Install frontend dependencies
         run: |
           cd frontend
+          python -m pip install --upgrade pip
           pip install -r requirements.txt
 
       - name: Install development tools
         run: |
-          pip install pytest ruff dvc
+          pip install pytest ruff dvc httpx requests-mock
 
-      - name: Lint
+      - name: Lint Code
         run: ruff check .
 
       - name: Run backend tests
         run: |
           cd backend
-          pytest
+          pytest -v
 
-      - name: Validate DVC
+      - name: Run frontend tests
+        run: |
+          cd frontend
+          pytest -v
+
+      - name: Validate DVC Pipeline
         run: dvc status
 
-      - name: Build backend image
+      - name: Build backend Docker image
         run: docker build -t credit-risk-backend ./backend
 
-      - name: Build frontend image
+      - name: Build frontend Docker image
         run: docker build -t credit-risk-frontend ./frontend
 
-      - name: Build Containers
+      - name: Start containers
         run: docker compose up --build -d
 
-      - name: Wait for services
-        run: sleep 20
+      - name: Wait for backend
+        run: |
+          for i in {1..30}; do
+            if curl --fail http://localhost:8000/health; then
+              exit 0
+            fi
+            sleep 2
+          done
+          exit 1
 
-      - name: Health check
-        run: curl --fail http://localhost:8000/health
+      - name: Test Prediction API
+        run: |
+          curl -X POST http://localhost:8000/predict \
+            -H "Content-Type: application/json" \
+            -d '{
+              "age":30,
+              "sex":"male",
+              "job":2,
+              "housing":"own",
+              "saving_accounts":"little",
+              "checking_account":"moderate",
+              "credit_amount":5000,
+              "duration":24,
+              "purpose":"car"
+            }'
 
-      - name: Stop services
+      - name: Stop containers
         if: always()
         run: docker compose down
-
