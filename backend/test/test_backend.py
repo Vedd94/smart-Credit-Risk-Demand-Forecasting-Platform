@@ -1,3 +1,10 @@
+import sys
+from pathlib import Path
+
+# Ensure the project root is on sys.path so `main` is importable
+# when pytest is run from the repo root in CI (working-directory: .)
+sys.path.append(str(Path(__file__).resolve().parents[1]))
+
 from fastapi.testclient import TestClient
 from main import app
 

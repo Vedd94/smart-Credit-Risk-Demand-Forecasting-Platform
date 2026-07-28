@@ -1,6 +1,5 @@
 import requests
 import pytest
-import requests
 
 API_URL = "http://backend:8000/predict"
 
@@ -30,6 +29,7 @@ def test_api_call(requests_mock):
 
     assert response.status_code == 200
     assert response.json()["predicted_category"] == "Good"
+
 
 def test_connection_error(monkeypatch):
 
@@ -68,6 +68,7 @@ def test_response_contains_prediction(requests_mock):
     data = response.json()
 
     assert "predicted_category" in data
+
 
 def test_payload():
 
