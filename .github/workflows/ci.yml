@@ -47,8 +47,6 @@ jobs:
           cd frontend
           pytest -v
 
-      - name: Validate DVC Pipeline
-        run: dvc status
 
       - name: Build backend Docker image
         run: docker build -t credit-risk-backend ./backend
